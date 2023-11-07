@@ -1,7 +1,6 @@
 #include <stdio.h>
 #include <ctype.h>
 
-// Definimos los tipos de tokens
 typedef enum {
     NUMERO,
     OPERADOR,
@@ -11,7 +10,6 @@ typedef enum {
     FIN_DE_LINEA
 } TipoToken;
 
-// Estructura para representar un token
 typedef struct {
     TipoToken tipo;
     char valor[50];
@@ -19,7 +17,6 @@ typedef struct {
     int columna;
 } Token;
 
-// Función para imprimir un token
 void imprimirToken(Token t) {
     switch (t.tipo) {
         case NUMERO:
@@ -43,10 +40,11 @@ void imprimirToken(Token t) {
     }
 }
 
-// Función para procesar la expresión y generar los tokens
-void procesarExpresion(char* expresion, int linea) {
-    int columna = 1;
+void reconocerTokens(char* expresion, int linea) {
     int i = 0;
+    int columna = 1;
+    char ultimoCaracter = '\0';
+
     while (expresion[i] != '\0') {
         Token token;
         token.linea = linea;
@@ -61,10 +59,15 @@ void procesarExpresion(char* expresion, int linea) {
             token.valor[j] = '\0';
             imprimirToken(token);
         } else if (expresion[i] == '+' || expresion[i] == '-' || expresion[i] == '*' || expresion[i] == '/') {
-            token.tipo = OPERADOR;
-            token.valor[0] = expresion[i++];
-            token.valor[1] = '\0';
-            imprimirToken(token);
+            if (isdigit(ultimoCaracter) || ultimoCaracter == ')' || ultimoCaracter == ' ') {
+                token.tipo = OPERADOR;
+                token.valor[0] = expresion[i++];
+                token.valor[1] = '\0';
+                imprimirToken(token);
+            } else {
+                printf("Error: Operadores consecutivos en la posicion %d\n", i);
+                return;
+            }
         } else if (expresion[i] == '(') {
             token.tipo = PARENTESIS_IZQUIERDO;
             token.valor[0] = expresion[i++];
@@ -78,12 +81,66 @@ void procesarExpresion(char* expresion, int linea) {
         } else if (expresion[i] == ' ' || expresion[i] == '\t') {
             i++;
             columna++;
+        } else if (expresion[i] == '\n') {
+            token.tipo = FIN_DE_LINEA;
+            imprimirToken(token);
+            i++;
+            linea++;
+            columna = 1; // Reiniciar la columna al inicio de una nueva línea
         } else {
             token.tipo = DESCONOCIDO;
             token.valor[0] = expresion[i++];
             token.valor[1] = '\0';
             imprimirToken(token);
         }
+
+        // Actualizar el último carácter procesado
+        ultimoCaracter = expresion[i];
+    }
+}
+
+int reconocerExpresion(char* expresion) {
+    int i = 0;
+    int parentesisAbiertos = 0;
+    int parentesisCerrados = 0;
+
+    char ultimoCaracter = '\0';
+
+    while (expresion[i] != '\0') {
+        if (expresion[i] == '(') {
+            parentesisAbiertos++;
+            if (ultimoCaracter == ')' || ultimoCaracter == '(' || ultimoCaracter == '*' || ultimoCaracter == '/' || ultimoCaracter == '+' || ultimoCaracter == '-') {
+                printf("Error: Expresion invalida en la posicion %d\n", i);
+                return 0;
+            }
+        } else if (expresion[i] == ')') {
+            parentesisCerrados++;
+            if (ultimoCaracter == '(' || ultimoCaracter == '*' || ultimoCaracter == '/' || ultimoCaracter == '+' || ultimoCaracter == '-') {
+                printf("Error: Expresion invalida en la posicion %d\n", i);
+                return 0;
+            }
+        } else if (expresion[i] == '*' || expresion[i] == '/' || expresion[i] == '+' || expresion[i] == '-') {
+            if (ultimoCaracter == '(' || ultimoCaracter == '*' || ultimoCaracter == '/' || ultimoCaracter == '+' || ultimoCaracter == '-') {
+                printf("Error: Expresion invalida en la posicion %d\n", i);
+                return 0;
+            }
+        } else if (isdigit(expresion[i])) {
+            if (ultimoCaracter == ')') {
+                printf("Error: Expresion invalida en la posicion %d\n", i);
+                return 0;
+            }
+        }
+
+        ultimoCaracter = expresion[i];
+        i++;
+    }
+
+    if (parentesisAbiertos == parentesisCerrados) {
+        printf("La expresion es valida.\n");
+        return 1;
+    } else {
+        printf("Error: La cantidad de parentesis abiertos y cerrados no coincide.\n");
+        return 0;
     }
 }
 
@@ -96,7 +153,8 @@ int main() {
         if (fgets(expresion, sizeof(expresion), stdin) == NULL || expresion[0] == '\n') {
             break;
         }
-        procesarExpresion(expresion, linea++);
+        reconocerTokens(expresion, linea++);
+        reconocerExpresion(expresion);
     }
 
     return 0;
