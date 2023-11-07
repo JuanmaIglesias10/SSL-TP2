@@ -1,5 +1,6 @@
 {
     "files.associations": {
-        "scannerAritmeticas.C": "cpp"
+        "scannerAritmeticas.C": "cpp",
+        "main.C": "cpp"
     }
 }

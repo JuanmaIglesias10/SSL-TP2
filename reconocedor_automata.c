@@ -1,21 +1,4 @@
-#include <stdio.h>
-#include <ctype.h>
-
-typedef enum {
-    NUMERO,
-    OPERADOR,
-    PARENTESIS_IZQUIERDO,
-    PARENTESIS_DERECHO,
-    DESCONOCIDO,
-    FIN_DE_LINEA
-} TipoToken;
-
-typedef struct {
-    TipoToken tipo;
-    char valor[50];
-    int linea;
-    int columna;
-} Token;
+#include "reconocedor.h"
 
 void imprimirToken(Token t) {
     switch (t.tipo) {
@@ -142,20 +125,4 @@ int reconocerExpresion(char* expresion) {
         printf("Error: La cantidad de parentesis abiertos y cerrados no coincide.\n");
         return 0;
     }
-}
-
-int main() {
-    char expresion[100];
-    int linea = 1;
-
-    while (1) {
-        printf("Ingrese una expresion (o presione Enter para salir): ");
-        if (fgets(expresion, sizeof(expresion), stdin) == NULL || expresion[0] == '\n') {
-            break;
-        }
-        reconocerTokens(expresion, linea++);
-        reconocerExpresion(expresion);
-    }
-
-    return 0;
 }
